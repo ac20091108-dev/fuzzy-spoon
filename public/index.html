@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TechFinder AI</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .contenedor-principal {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 16px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      letter-spacing: -0.02em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      padding: 20px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    }
+
+    .card h2 {
+      margin: 0 0 12px 0;
+      font-size: 1.1rem;
+    }
+
+    #map {
+      height: 360px;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-top: 10px;
+      background: #e2e8f0;
+    }
+
+    .filtro-barra {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    #buscar-input {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    #catalogo {
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .item {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      background: var(--surface-soft);
+      transition: border-color 0.15s ease;
+    }
+
+    .item:hover {
+      border-color: #cbd5e1;
+    }
+
+    .item.activa {
+      border-color: var(--accent);
+      background: #eff6ff;
+    }
+
+    .item-meta {
+      margin-top: 4px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .item-precio {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    #estado-tienda {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    #chat-mensajes {
+      height: 260px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: var(--surface-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg {
+      padding: 10px 14px;
+      border-radius: 10px;
+      max-width: 85%;
+      word-wrap: break-word;
+    }
+
+    .msg-usuario {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .msg-ia {
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .msg-error {
+      border-color: #fca5a5;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    #chat-form {
+      display: flex;
+      gap: 8px;
+    }
+
+    input, select, button {
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus {
+      outline: 2px solid rgba(37, 99, 235, 0.25);
+      border-color: var(--accent);
+    }
+
+    button {
+      cursor: pointer;
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      font-weight: 500;
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    button.secundario {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    button.secundario:hover {
+      background: #cbd5e1;
+    }
+
+    @media (max-width: 860px) {
+      body { padding: 14px; }
+      .grid { grid-template-columns: 1fr; }
+      .msg { max-width: 95%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="contenedor-principal">
+    <header>
+      <h1>TechFinder AI</h1>
+      <button id="btn-limpiar-filtro" class="secundario" type="button">Ver todas las tiendas</button>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Catálogo de Componentes</h2>
+        <div class="filtro-barra">
+          <input type="text" id="buscar-input" placeholder="Buscar componente o categoría..." />
+          <select id="filtro-tienda">
+            <option value="">Todas las tiendas</option>
+          </select>
+        </div>
+        <div id="catalogo">Cargando componentes...</div>
+      </section>
+
+      <section class="card">
+        <h2>Mapa de Tiendas (Paraguay)</h2>
+        <p id="estado-tienda">Seleccioná un pin o una tienda para filtrar.</p>
+        <div id="map"></div>
+      </section>
+    </div>
+
+    <section id="chat-section" class="card" style="margin-top: 20px;">
+      <h2>Asistente TechFinder AI</h2>
+      <div id="chat-mensajes">
+        <div class="msg msg-ia">
+          <strong>TechFinder AI:</strong> ¡Hola! Preguntame por componentes, precios, stock o tiendas en Paraguay.
+        </div>
+      </div>
+      <form id="chat-form">
+        <input type="text" id="chat-input" style="flex: 1;" placeholder="Preguntá por componentes, precios o tiendas..." required />
+        <button id="chat-btn" type="submit">Enviar</button>
+      </form>
+    </section>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
